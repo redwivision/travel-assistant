@@ -157,18 +157,26 @@ export default function Dashboard() {
               {deferredPrompt ? (
                  <button 
                   onClick={handleInstallClick}
-                  className="w-full bg-navy text-white py-4 rounded-xl flex justify-center items-center gap-3 font-bold shadow-lg active:scale-95 transition-transform"
+                  className="w-full bg-navy text-white py-5 rounded-2xl flex justify-center items-center gap-3 font-bold shadow-xl active:scale-[0.98] transition-all hover:bg-opacity-90"
                  >
-                   <Download className="w-6 h-6 text-safety-yellow" /> INSTALL ASSISTANT APP
+                   <Download className="w-6 h-6 text-safety-yellow" /> 
+                   <span className="uppercase tracking-tight">Personal Assistant App — Install Now</span>
                  </button>
               ) : (
-                 <div className="w-full bg-blue-50 border-2 border-blue-200 p-4 rounded-xl flex flex-col items-center justify-center text-navy font-bold text-sm text-center">
-                   <p className="mb-2 uppercase tracking-wide opacity-50">App Installation</p>
-                   <div>
+                 <div className="w-full bg-navy/5 border-2 border-navy/10 p-6 rounded-2xl flex flex-col items-center text-center">
+                   <div className="w-12 h-12 bg-navy rounded-xl flex items-center justify-center mb-4 shadow-lg">
+                     <Download className="w-6 h-6 text-safety-yellow" />
+                   </div>
+                   <h2 className="text-navy font-black text-lg mb-2 uppercase italic">Instant Access Required?</h2>
+                   <div className="text-sm font-bold text-navy/70 max-w-[280px] leading-relaxed">
                      {isIOS ? (
-                       <>Tap the <span className="inline-block bg-white shadow-sm p-1 rounded"><Download className="w-4 h-4 inline" /> Share</span> button in Safari, then select "Add to Home Screen"</>
+                       <div className="space-y-3">
+                         <p className="bg-safety-yellow/20 text-navy p-2 rounded-lg text-xs">⚠️ MUST USE SAFARI ON IPHONE/IPAD</p>
+                         <p>1. Tap the <span className="inline-block bg-white shadow-sm px-2 py-0.5 rounded border border-gray-100">Share</span> button below</p>
+                         <p>2. Select <span className="font-black text-navy uppercase italic">"Add to Home Screen"</span></p>
+                       </div>
                      ) : (
-                       <>Open this page in a mobile browser (Chrome/Safari) to install the app directly to your phone!</>
+                       <p>Please open this site in <span className="text-navy font-black italic">Chrome</span> or <span className="text-navy font-black italic">Safari</span> to unlock the 1-click App Installation.</p>
                      )}
                    </div>
                  </div>
