@@ -1,18 +1,18 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { supabase, getVisaInfo, getSafetyInfo, getWeather, getTrips, saveTrip } from '../lib/supabaseClient';
+import { supabase, getVisaInfo, getSafetyInfo, getWeather, getTrips, saveTrip, deleteTrip } from '../lib/supabaseClient';
 import type { VisaInfo, SafetyInfo, WeatherForecast, Trip } from '../lib/supabaseClient';
-import { ShieldCheck, CloudSun, Globe, CheckCircle2, AlertTriangle, Plus, Loader2, Download, ArrowRight, Settings, ExternalLink } from 'lucide-react';
+import { ShieldCheck, CloudSun, Globe, CheckCircle2, AlertTriangle, Plus, Loader2, Download, ArrowRight, Settings, ExternalLink, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const DESTINATIONS = [
-  "France", "Kenya", "Uganda", "Netherlands", "South Africa", 
-  "Madagascar", "South Sudan", "UAE", "USA", "Ethiopia"
+  "South Africa", "Mozambique", "Madagascar", "Kenya", "Zimbabwe", 
+  "Botswana", "USA", "Germany", "Thailand", "Philippines", "Brazil"
 ];
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const [destination, setDestination] = useState("France");
+  const [destination, setDestination] = useState("South Africa");
   
   // Widget Data
   const [visa, setVisa] = useState<VisaInfo | null>(null);
@@ -21,8 +21,9 @@ export default function Dashboard() {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [passportExpiry, setPassportExpiry] = useState<string | undefined>();
   
-  // Loading states
+  // Loading & Error states
   const [loadingWidgets, setLoadingWidgets] = useState(false);
+  const [widgetError, setWidgetError] = useState<string | null>(null);
   const [loadingTrips, setLoadingTrips] = useState(false);
   const [savingTrip, setSavingTrip] = useState(false);
 
@@ -65,19 +66,27 @@ export default function Dashboard() {
     }
   };
 
-  const fetchWidgets = async (dest: string) => {
-    setLoadingWidgets(true);
-    try {
-      let expiry = passportExpiry;
-      if (user && !expiry) {
+  // Fetch Passport Expiry ONCE
+  useEffect(() => {
+    async function loadPassport() {
+      if (!user) return;
+      try {
         const { data } = await supabase.from('profiles').select('passport_expiry').eq('id', user.id).single();
         if (data?.passport_expiry) {
-          expiry = data.passport_expiry;
-          setPassportExpiry(expiry);
+          setPassportExpiry(data.passport_expiry);
         }
+      } catch (err) {
+        console.error("Failed to load passport expiry:", err);
       }
+    }
+    loadPassport();
+  }, [user]);
 
-      // Parallel fetch for speed
+  const fetchWidgets = async (dest: string, overrideExpiry?: string) => {
+    setLoadingWidgets(true);
+    setWidgetError(null);
+    try {
+      const expiry = overrideExpiry || passportExpiry;
       const [vData, sData, wData] = await Promise.all([
         getVisaInfo(dest, "ethiopia", expiry),
         getSafetyInfo(dest),
@@ -88,6 +97,7 @@ export default function Dashboard() {
       setWeather(wData);
     } catch (err) {
       console.error("Error fetching widgets:", err);
+      setWidgetError("Could not load data. Please check your connection.");
     }
     setLoadingWidgets(false);
   };
@@ -122,10 +132,34 @@ export default function Dashboard() {
     setSavingTrip(false);
   };
 
-  // Run on mount and when destination changes
+  const handleDeleteTrip = async (tripId: number) => {
+    try {
+      await deleteTrip(tripId);
+      await fetchTrips();
+    } catch (err) {
+      console.error("Failed to delete trip:", err);
+    }
+  };
+
+  const renderVisaBadge = () => {
+    if (!visa) return null;
+    if (!visa.visaRequired) return <div className="mt-1 font-black px-4 py-1 rounded-lg bg-safety-yellow text-navy">NO VISA NEEDED</div>;
+    
+    switch (visa.visaType) {
+      case 'voa':
+        return <div className="mt-1 font-black px-4 py-1 rounded-lg bg-yellow-500 text-white shadow-sm">VISA ON ARRIVAL</div>;
+      case 'evisa':
+        return <div className="mt-1 font-black px-4 py-1 rounded-lg bg-blue-500 text-white shadow-sm">eVISA AVAILABLE</div>;
+      case 'embassy':
+      default:
+        return <div className="mt-1 font-black px-4 py-1 rounded-lg bg-red-500 text-white shadow-sm">VISA REQUIRED</div>;
+    }
+  };
+
+  // Run when destination or passportExpiry changes (so user setting expiry immediately applies it)
   useEffect(() => {
-    fetchWidgets(destination);
-  }, [destination]);
+    fetchWidgets(destination, passportExpiry);
+  }, [destination, passportExpiry]);
 
   // Run only on mount
   useEffect(() => {
@@ -145,8 +179,8 @@ export default function Dashboard() {
               <span className="text-white font-bold text-xl">{userName.charAt(0).toUpperCase()}</span>
             </div>
             <div>
-              <h1 className="text-2xl font-black text-navy leading-none uppercase">{destination}</h1>
-              <p className="text-sm font-bold text-navy opacity-60 uppercase tracking-widest mt-1">Concierge</p>
+              <h1 className="text-2xl font-black text-navy leading-none uppercase">Hi, {userName}</h1>
+              <p className="text-sm font-bold text-navy opacity-60 uppercase tracking-widest mt-1">Travel Concierge</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -202,11 +236,10 @@ export default function Dashboard() {
             </div>
           )}
 
-          <p className="text-xl font-bold text-navy opacity-50 mb-2">Welcome, {userName}.</p>
           <div className="flex flex-col sm:flex-row sm:items-end gap-4 mt-4">
              <div className="flex-1">
                 <label className="block text-sm font-bold text-navy uppercase tracking-wider mb-2">
-                  Select Destination
+                  Showing Results For
                 </label>
                 <select 
                   value={destination}
@@ -220,13 +253,18 @@ export default function Dashboard() {
           </div>
         </section>
 
-        {/* Visa Status Block (Always visible) */}
-        {visa && (
-          <div className={`card-concierge border-0 ${visa.visaRequired ? 'bg-red-50' : 'bg-navy text-white'}`}>
+        {widgetError && (
+          <div className="bg-red-50 text-red-600 p-6 rounded-2xl border-2 border-red-100 flex items-center justify-center gap-3 font-bold text-center">
+            <AlertTriangle className="w-6 h-6" />
+            <p>{widgetError}</p>
+          </div>
+        )}
+
+        {/* Visa Status Block (Always visible unless error) */}
+        {!widgetError && visa && (
+          <div className={`card-concierge border-0 ${visa.visaRequired && visa.visaType === 'embassy' ? 'bg-red-50' : 'bg-navy text-white'}`}>
             <div className="flex items-start gap-4 mb-4">
-              <div className={`mt-1 font-black px-4 py-1 rounded-lg ${visa.visaRequired ? 'bg-red-500 text-white' : 'bg-safety-yellow text-navy'}`}>
-                {visa.visaRequired ? 'VISA REQUIRED' : 'NO VISA NEEDED'}
-              </div>
+              {renderVisaBadge()}
             </div>
             
             {visa.passportAlert && (
@@ -272,9 +310,10 @@ export default function Dashboard() {
         )}
 
         {/* Weather and Safety Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Weather Card */}
-          <div className="card-concierge flex flex-col justify-between min-h-[200px]">
+        {!widgetError && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Weather Card */}
+            <div className="card-concierge flex flex-col justify-between min-h-[200px]">
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-sm font-black text-navy opacity-40 uppercase tracking-widest mb-1">Weather</p>
@@ -329,6 +368,7 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
+        )}
 
         {/* Trips Section */}
         <section className="pt-6 border-t border-gray-200">
@@ -376,6 +416,13 @@ export default function Dashboard() {
                          </p>
                        </div>
                     </div>
+                    <button 
+                      onClick={() => handleDeleteTrip(trip.id)}
+                      className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-colors"
+                      title="Delete Trip"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
                  </div>
                ))
              )}

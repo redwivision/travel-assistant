@@ -95,6 +95,69 @@ const safetyData: Record<string, {
     generalAdvice:
       "Addis Ababa is generally safe in the city center. Avoid border regions (Tigray, Afar, Somalia border). Political demonstrations can occur. Internet may be interrupted. Emergency: 911.",
   },
+  mozambique: {
+    safetyLevel: "Medium",
+    sources: [
+      { name: "UK FCDO", rating: "Exercise high degree of caution", lastUpdated: "2025-03-10" },
+      { name: "US DOS", rating: "Level 2: Exercise Increased Caution", lastUpdated: "2024-11-20" },
+    ],
+    generalAdvice:
+      "Maputo has high rates of petty crime. Avoid walking alone at night. Security incidents occur in the northern Cabo Delgado province; avoid travel there.",
+  },
+  zimbabwe: {
+    safetyLevel: "Medium",
+    sources: [
+      { name: "UK FCDO", rating: "Exercise high degree of caution", lastUpdated: "2025-02-15" },
+      { name: "US DOS", rating: "Level 2: Exercise Increased Caution", lastUpdated: "2025-01-10" },
+    ],
+    generalAdvice:
+      "Zimbabwe is generally safe for tourists, especially around Victoria Falls. Petty crime occurs in Harare and Bulawayo. Carry cash as credit card networks can be unreliable.",
+  },
+  botswana: {
+    safetyLevel: "Low",
+    sources: [
+      { name: "UK FCDO", rating: "Exercise normal precautions", lastUpdated: "2025-04-01" },
+      { name: "US DOS", rating: "Level 1: Exercise Normal Precautions", lastUpdated: "2024-12-05" },
+    ],
+    generalAdvice:
+      "Botswana is one of the safest countries in Africa. Crime against tourists is rare. Be cautious of wildlife when driving outside urban areas.",
+  },
+  germany: {
+    safetyLevel: "Low",
+    sources: [
+      { name: "UK FCDO", rating: "Exercise normal precautions", lastUpdated: "2025-04-01" },
+      { name: "US DOS", rating: "Level 2: Exercise Increased Caution (terrorism risk)", lastUpdated: "2025-02-10" },
+    ],
+    generalAdvice:
+      "Germany is very safe. Petty crime like pickpocketing happens in busy train stations and tourist hubs. Be aware of your surroundings in large crowds.",
+  },
+  thailand: {
+    safetyLevel: "Medium",
+    sources: [
+      { name: "UK FCDO", rating: "Exercise high degree of caution", lastUpdated: "2025-03-25" },
+      { name: "US DOS", rating: "Level 1: Exercise Normal Precautions", lastUpdated: "2025-01-20" },
+    ],
+    generalAdvice:
+      "Avoid the deep southern provinces near the Malaysia border due to insurgent activity. Tourist areas (Bangkok, Phuket, Chiang Mai) are safe but watch out for scams and pickpockets.",
+  },
+  philippines: {
+    safetyLevel: "Medium",
+    sources: [
+      { name: "UK FCDO", rating: "Exercise high degree of caution", lastUpdated: "2025-01-30" },
+      { name: "US DOS", rating: "Level 2: Exercise Increased Caution", lastUpdated: "2024-11-15" },
+    ],
+    generalAdvice:
+      "Tourist areas like Palawan, Boracay, and Metro Manila business districts are generally safe. Avoid travel to the Sulu Archipelago and Marawi City due to terrorism risks.",
+  },
+  brazil: {
+    safetyLevel: "High",
+    sources: [
+      { name: "UK FCDO", rating: "Exercise high degree of caution", lastUpdated: "2025-02-28" },
+      { name: "US DOS", rating: "Level 2: Exercise Increased Caution", lastUpdated: "2025-01-05" },
+    ],
+    generalAdvice:
+      "High rates of violent crime, especially in major cities like Rio de Janeiro and São Paulo. Avoid favelas. Do not display expensive jewelry or electronics. Use registered taxis.",
+  },
 };
 
 Deno.serve(async (req: Request) => {

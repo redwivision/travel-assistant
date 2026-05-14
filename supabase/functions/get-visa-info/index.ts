@@ -6,83 +6,95 @@ const visaData: Record<string, {
   notes: string;
   officialUrl?: string;
   needs6Months?: boolean;
+  visaType?: "embassy" | "evisa" | "voa" | "free";
 }> = {
   "ethiopia_south_africa": {
     visaRequired: true,
     requiredDocuments: ["Valid passport", "Completed visa application", "Proof of funds", "Return ticket"],
     notes: "Visa required. Apply via eVisa. Also requires at least 2 blank passport pages.",
     officialUrl: "https://ehome.dha.gov.za/epevisaportal",
-    needs6Months: true
+    needs6Months: true,
+    visaType: "evisa"
   },
   "ethiopia_mozambique": {
     visaRequired: true,
     requiredDocuments: ["Valid passport", "Return ticket", "Hotel booking"],
     notes: "Visa on arrival is generally available for Ethiopians, but regulations change. Visa likely required. Verify at official source.",
     officialUrl: "https://evisa.gov.mz/",
-    needs6Months: true
+    needs6Months: true,
+    visaType: "voa"
   },
   "ethiopia_madagascar": {
     visaRequired: true,
     requiredDocuments: ["Valid passport", "Return ticket"],
     notes: "eVisas available online or Visa on Arrival.",
     officialUrl: "https://evisa.gov.mg/",
-    needs6Months: true
+    needs6Months: true,
+    visaType: "evisa"
   },
   "ethiopia_kenya": {
     visaRequired: true,
     requiredDocuments: ["Valid Ethiopian passport", "Return ticket", "Hotel booking"],
     notes: "Visa required. Apply via ETA.",
     officialUrl: "https://www.etakenya.go.ke",
-    needs6Months: true
+    needs6Months: true,
+    visaType: "evisa"
   },
   "ethiopia_zimbabwe": {
     visaRequired: true,
     requiredDocuments: ["Valid passport", "Return ticket"],
     notes: "Visa on arrival is typically available for Ethiopians. Visa likely required. Verify at official source.",
     officialUrl: "https://www.evisa.gov.zw/",
-    needs6Months: true
+    needs6Months: true,
+    visaType: "voa"
   },
   "ethiopia_botswana": {
     visaRequired: true,
     requiredDocuments: ["Valid passport", "Return ticket", "Certified copy of passport", "2 passport photos"],
     notes: "Visa required. Apply at embassy. No official online portal found. Contact embassy.",
     officialUrl: "https://embassy.goabroad.com/embassies-of-botswana",
-    needs6Months: true
+    needs6Months: true,
+    visaType: "embassy"
   },
   "ethiopia_usa": {
     visaRequired: true,
     requiredDocuments: ["Valid passport", "DS-160 form", "Interview appointment", "Proof of funds/ties"],
     notes: "Visa required (complex interview process). Requires at least 2 blank passport pages.",
     officialUrl: "https://ceac.state.gov/genniv/",
-    needs6Months: true
+    needs6Months: true,
+    visaType: "embassy"
   },
   "ethiopia_germany": {
     visaRequired: true,
     requiredDocuments: ["Valid passport", "Schengen visa application", "Travel insurance", "Proof of accommodation", "Proof of funds"],
     notes: "Schengen visa required. Requires at least 2 blank passport pages.",
     officialUrl: "https://videx.diplo.de/",
-    needs6Months: true
+    needs6Months: true,
+    visaType: "embassy"
   },
   "ethiopia_thailand": {
     visaRequired: true,
     requiredDocuments: ["Valid passport", "Return ticket", "Proof of funds (10,000 THB)", "Hotel booking"],
     notes: "Visa on arrival is available for Ethiopians, but verify at official source.",
     officialUrl: "https://www.thaievisa.go.th/",
-    needs6Months: true
+    needs6Months: true,
+    visaType: "voa"
   },
   "ethiopia_philippines": {
     visaRequired: true,
     requiredDocuments: ["Valid passport", "Visa application form", "Return ticket", "Proof of financial capacity"],
     notes: "Visa required. Apply at embassy. No official online portal found. Contact embassy.",
     officialUrl: "https://embassy.goabroad.com/embassies-of-philippines",
-    needs6Months: true
+    needs6Months: true,
+    visaType: "embassy"
   },
   "ethiopia_brazil": {
     visaRequired: true,
     requiredDocuments: ["Valid passport", "Return ticket", "Proof of accommodation"],
     notes: "Visa required. Rules can be unclear for Ethiopian passport holders. Verify at official source.",
     officialUrl: "https://formulario-mre.serpro.gov.br/",
-    needs6Months: true
+    needs6Months: true,
+    visaType: "embassy"
   }
 };
 
@@ -126,7 +138,8 @@ Deno.serve(async (req: Request) => {
           notes: `No specific data found for ${citizenship} → ${destination}. Visa likely required. Verify at official source.`,
           officialUrl: null,
           passportAlert,
-          disclaimer
+          disclaimer,
+          visaType: "embassy"
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );

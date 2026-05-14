@@ -9,12 +9,14 @@ export default function Login() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
   const navigate = useNavigate();
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setSuccessMsg('');
 
     const { error: authError } = isSignUp
       ? await supabase.auth.signUp({ email, password })
@@ -23,9 +25,12 @@ export default function Login() {
     if (authError) {
       setError(authError.message);
     } else {
-      // If sign in is successful, the AuthContext will update, triggering App.tsx redirect.
-      // But we can also force navigate if needed.
-      navigate('/');
+      if (isSignUp) {
+        setSuccessMsg('Account created! Please check your email and click the confirmation link before signing in.');
+        setIsSignUp(false); // Switch to Sign In mode
+      } else {
+        navigate('/');
+      }
     }
     setLoading(false);
   };
@@ -77,6 +82,12 @@ export default function Login() {
               <div className="bg-red-50 text-red-600 p-4 rounded-xl font-medium text-sm">
                 {error}
                 {isSignUp && error.includes("User already registered") && " Try logging in instead."}
+              </div>
+            )}
+
+            {successMsg && (
+              <div className="bg-green-50 text-green-700 p-4 rounded-xl font-bold text-sm shadow-sm">
+                {successMsg}
               </div>
             )}
 

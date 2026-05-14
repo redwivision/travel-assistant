@@ -30,6 +30,7 @@ export interface VisaInfo {
   officialUrl?: string | null;
   passportAlert?: string | null;
   disclaimer?: string | null;
+  visaType?: "embassy" | "evisa" | "voa" | "free";
 }
 
 export interface SafetyInfo {

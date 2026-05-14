@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
-import { ArrowLeft, Save, Loader2, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, AlertCircle, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function Profile() {
@@ -44,6 +44,14 @@ export default function Profile() {
     
     setSaving(true);
     setMessage('');
+
+    const today = new Date().toISOString().split('T')[0];
+    if (expiry && expiry < today) {
+      setMessage('Warning: You entered a past date. Is your passport already expired?');
+      setSaving(false);
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('profiles')
@@ -57,7 +65,7 @@ export default function Profile() {
       setMessage('Profile updated successfully!');
     } catch (err) {
       console.error('Error saving profile:', err);
-      setMessage('Failed to update profile.');
+      setMessage('Failed to update profile. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -125,9 +133,12 @@ export default function Profile() {
             </div>
 
             {message && (
-              <p className={`font-bold text-sm ${message.includes('success') ? 'text-green-600' : 'text-red-600'}`}>
-                {message}
-              </p>
+              <div className={`p-4 rounded-xl font-bold text-sm shadow-sm flex items-start gap-3 ${
+                message.includes('success') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+              }`}>
+                {message.includes('success') ? <CheckCircle2 className="w-5 h-5 flex-shrink-0" /> : <AlertTriangle className="w-5 h-5 flex-shrink-0" />}
+                <p>{message}</p>
+              </div>
             )}
 
             <button
