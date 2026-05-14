@@ -7,21 +7,22 @@
 -- 1. PROFILES (extends auth.users)
 -- ─────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.profiles (
-  id          UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  full_name   TEXT,
-  citizenship TEXT NOT NULL DEFAULT 'Ethiopia',
-  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  id                   UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  full_name            TEXT,
+  passport_nationality TEXT NOT NULL DEFAULT 'Ethiopia',
+  passport_expiry      DATE,
+  created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- Auto-create a profile row when a new user signs up
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
-  INSERT INTO public.profiles (id, full_name, citizenship)
+  INSERT INTO public.profiles (id, full_name, passport_nationality)
   VALUES (
     NEW.id,
     COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
-    COALESCE(NEW.raw_user_meta_data->>'citizenship', 'Ethiopia')
+    COALESCE(NEW.raw_user_meta_data->>'passport_nationality', 'Ethiopia')
   )
   ON CONFLICT (id) DO NOTHING;
   RETURN NEW;

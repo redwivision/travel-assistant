@@ -27,6 +27,9 @@ export interface VisaInfo {
   visaRequired: boolean;
   requiredDocuments: string[];
   notes: string;
+  officialUrl?: string | null;
+  passportAlert?: string | null;
+  disclaimer?: string | null;
 }
 
 export interface SafetyInfo {
@@ -91,8 +94,8 @@ async function callEdgeFunction<T>(
  * Get visa requirements for a given citizenship → destination pair.
  * Defaults to Ethiopian citizenship.
  */
-export async function getVisaInfo(destination: string, citizenship = "ethiopia"): Promise<VisaInfo> {
-  return callEdgeFunction<VisaInfo>("get-visa-info", { citizenship, destination });
+export async function getVisaInfo(destination: string, citizenship = "ethiopia", passportExpiry?: string): Promise<VisaInfo> {
+  return callEdgeFunction<VisaInfo>("get-visa-info", { citizenship, destination, passportExpiry });
 }
 
 /**

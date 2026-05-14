@@ -3,6 +3,7 @@ import { useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import SafetyDetails from './pages/SafetyDetails';
+import Profile from './pages/Profile';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { session, loading } = useAuth();
@@ -33,6 +34,7 @@ export default function App() {
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/safety/:destination" element={<SafetyDetails />} />
+              <Route path="/profile" element={<Profile />} />
             </Routes>
           </ProtectedRoute>
         } 

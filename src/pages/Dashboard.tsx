@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { supabase, getVisaInfo, getSafetyInfo, getWeather, getTrips, saveTrip } from '../lib/supabaseClient';
 import type { VisaInfo, SafetyInfo, WeatherForecast, Trip } from '../lib/supabaseClient';
-import { ShieldCheck, CloudSun, Globe, CheckCircle2, AlertTriangle, Plus, Loader2, Download, ArrowRight } from 'lucide-react';
+import { ShieldCheck, CloudSun, Globe, CheckCircle2, AlertTriangle, Plus, Loader2, Download, ArrowRight, Settings, ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const DESTINATIONS = [
@@ -19,6 +19,7 @@ export default function Dashboard() {
   const [safety, setSafety] = useState<SafetyInfo | null>(null);
   const [weather, setWeather] = useState<WeatherForecast | null>(null);
   const [trips, setTrips] = useState<Trip[]>([]);
+  const [passportExpiry, setPassportExpiry] = useState<string | undefined>();
   
   // Loading states
   const [loadingWidgets, setLoadingWidgets] = useState(false);
@@ -67,9 +68,18 @@ export default function Dashboard() {
   const fetchWidgets = async (dest: string) => {
     setLoadingWidgets(true);
     try {
+      let expiry = passportExpiry;
+      if (user && !expiry) {
+        const { data } = await supabase.from('profiles').select('passport_expiry').eq('id', user.id).single();
+        if (data?.passport_expiry) {
+          expiry = data.passport_expiry;
+          setPassportExpiry(expiry);
+        }
+      }
+
       // Parallel fetch for speed
       const [vData, sData, wData] = await Promise.all([
-        getVisaInfo(dest),
+        getVisaInfo(dest, "ethiopia", expiry),
         getSafetyInfo(dest),
         getWeather(dest)
       ]);
@@ -139,12 +149,20 @@ export default function Dashboard() {
               <p className="text-sm font-bold text-navy opacity-60 uppercase tracking-widest mt-1">Concierge</p>
             </div>
           </div>
-          <button 
-            onClick={() => supabase.auth.signOut()}
-            className="text-sm font-bold text-navy opacity-40 hover:opacity-100"
-          >
-            Sign Out
-          </button>
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => navigate('/profile')}
+              className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              <Settings className="w-6 h-6 text-navy opacity-40 hover:opacity-100" />
+            </button>
+            <button 
+              onClick={() => supabase.auth.signOut()}
+              className="text-sm font-bold text-navy opacity-40 hover:opacity-100"
+            >
+              Sign Out
+            </button>
+          </div>
         </div>
       </header>
 
@@ -210,9 +228,29 @@ export default function Dashboard() {
                 {visa.visaRequired ? 'VISA REQUIRED' : 'NO VISA NEEDED'}
               </div>
             </div>
+            
+            {visa.passportAlert && (
+              <div className="bg-red-600 text-white p-4 rounded-xl mb-4 font-bold text-sm shadow-sm flex items-start gap-3">
+                <AlertTriangle className="w-5 h-5 flex-shrink-0" />
+                <p>{visa.passportAlert}</p>
+              </div>
+            )}
+            
             <p className={`text-lg mb-4 opacity-90 ${visa.visaRequired ? 'font-bold' : ''}`}>
               {visa.notes}
             </p>
+            
+            {visa.officialUrl && (
+              <a 
+                href={visa.officialUrl} 
+                target="_blank" 
+                rel="noreferrer"
+                className="inline-flex items-center gap-2 bg-white text-navy px-4 py-2 rounded-lg font-bold text-sm mb-4 hover:bg-gray-100 transition-colors shadow-sm"
+              >
+                <ExternalLink className="w-4 h-4" /> Official Portal
+              </a>
+            )}
+
             {visa.requiredDocuments.length > 0 && (
               <div className="space-y-2 mt-4 opacity-80 text-sm font-medium">
                 <p className="font-bold uppercase tracking-wider mb-2">Checklist:</p>
@@ -223,6 +261,12 @@ export default function Dashboard() {
                   </p>
                 ))}
               </div>
+            )}
+
+            {visa.disclaimer && (
+              <p className="text-xs opacity-50 mt-6 italic font-medium leading-relaxed">
+                {visa.disclaimer}
+              </p>
             )}
           </div>
         )}
