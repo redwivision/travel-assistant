@@ -1,10 +1,23 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 import Landing from './pages/Landing';
 import Dashboard from './pages/Dashboard';
 import SafetyDetails from './pages/SafetyDetails';
 import Profile from './pages/Profile';
+import BottomNav from './components/BottomNav';
+
+function AppLayout({ children }: { children: React.ReactNode }) {
+  const { pathname } = useLocation();
+  const isAuthPage = pathname === '/login' || pathname === '/';
+
+  return (
+    <div className={`min-h-screen ${!isAuthPage ? 'safe-pb' : ''}`}>
+      {children}
+      {!isAuthPage && <BottomNav />}
+    </div>
+  );
+}
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { session, loading } = useAuth();
@@ -24,7 +37,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <Navigate to="/login" replace />;
   }
 
-  return <>{children}</>;
+  return <AppLayout>{children}</AppLayout>;
 }
 
 export default function App() {
@@ -40,6 +53,8 @@ export default function App() {
           <ProtectedRoute>
             <Routes>
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/trips" element={<Dashboard showOnlyTrips />} />
+              <Route path="/weather" element={<Dashboard showOnlyWeather />} />
               <Route path="/safety/:destination" element={<SafetyDetails />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="*" element={<Navigate to="/dashboard" replace />} />

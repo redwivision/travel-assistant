@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
-import { ArrowLeft, Save, Loader2, AlertCircle, CheckCircle2, AlertTriangle, Key } from 'lucide-react';
+import { 
+  User, ShieldCheck, Key, Save, Loader2, 
+  CheckCircle2, AlertTriangle, LogOut 
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function Profile() {
@@ -18,6 +21,11 @@ export default function Profile() {
   const [newPassword, setNewPassword] = useState('');
   const [passwordSaving, setPasswordSaving] = useState(false);
   const [passwordMessage, setPasswordMessage] = useState('');
+
+  // Haptic feedback helper
+  const triggerHaptic = () => {
+    if ('vibrate' in navigator) navigator.vibrate(10);
+  };
 
   useEffect(() => {
     async function loadProfile() {
@@ -47,15 +55,9 @@ export default function Profile() {
     e.preventDefault();
     if (!user) return;
     
+    triggerHaptic();
     setSaving(true);
     setMessage('');
-
-    const today = new Date().toISOString().split('T')[0];
-    if (expiry && expiry < today) {
-      setMessage('Warning: You entered a past date. Is your passport already expired?');
-      setSaving(false);
-      return;
-    }
 
     try {
       const { error } = await supabase
@@ -70,7 +72,7 @@ export default function Profile() {
       setMessage('Profile updated successfully!');
     } catch (err) {
       console.error('Error saving profile:', err);
-      setMessage('Failed to update profile. Please try again.');
+      setMessage('Failed to update profile.');
     } finally {
       setSaving(false);
     }
@@ -79,11 +81,8 @@ export default function Profile() {
   const handlePasswordUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPassword) return;
-    if (newPassword.length < 6) {
-      setPasswordMessage('Password must be at least 6 characters.');
-      return;
-    }
-
+    
+    triggerHaptic();
     setPasswordSaving(true);
     setPasswordMessage('');
 
@@ -103,126 +102,107 @@ export default function Profile() {
   if (loading) {
     return (
       <div className="min-h-screen bg-surface flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-navy" />
+        <Loader2 className="w-8 h-8 animate-spin text-navy/20" />
       </div>
     );
   }
 
+  const userName = user?.user_metadata?.full_name || "Traveler";
+
   return (
-    <div className="min-h-screen pb-20">
-      <header className="bg-white border-b border-gray-100 px-6 py-4 sticky top-0 z-50">
-        <div className="max-w-2xl mx-auto flex items-center gap-4">
-          <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-            <ArrowLeft className="w-6 h-6 text-navy" />
-          </button>
-          <div>
-            <h1 className="text-2xl font-black text-navy leading-none uppercase">Settings</h1>
-            <p className="text-sm font-bold text-navy opacity-60 uppercase tracking-widest mt-1">Travel Profile</p>
-          </div>
+    <div className="max-w-lg mx-auto px-6 pt-12 pb-32 min-h-screen">
+      {/* Profile Header */}
+      <header className="flex flex-col items-center mb-10 text-center">
+        <div className="w-24 h-24 bg-navy rounded-3xl flex items-center justify-center shadow-2xl border-4 border-white mb-4">
+           <span className="text-white font-black text-4xl uppercase tracking-tighter italic">
+             {userName.split(' ').map((n: string) => n[0]).join('')}
+           </span>
         </div>
+        <h1 className="text-3xl font-black text-navy uppercase tracking-tighter">{userName}</h1>
+        <p className="text-xs font-black opacity-30 uppercase tracking-[0.2em] mt-2">Verified Traveler</p>
       </header>
 
-      <main className="max-w-2xl mx-auto px-6 mt-8">
-        <div className="card-concierge bg-white border-0">
-          <div className="flex items-center gap-3 mb-6">
-            <AlertCircle className="w-6 h-6 text-safety-yellow" />
-            <h2 className="text-xl font-bold text-navy uppercase">Passport Information</h2>
+      <div className="space-y-8">
+        {/* Passport Section */}
+        <section>
+          <p className="text-[10px] font-black opacity-30 uppercase tracking-[0.3em] ml-4 mb-3">Identity Document</p>
+          <div className="card-concierge bg-white border-none shadow-sm">
+             <form onSubmit={handleSave} className="space-y-6">
+                <div>
+                   <label className="block text-[10px] font-black opacity-30 uppercase tracking-widest mb-2 ml-1">Nationality</label>
+                   <input
+                     type="text"
+                     value={nationality}
+                     disabled
+                     className="w-full bg-navy/5 border-none h-14 rounded-2xl px-6 font-black uppercase text-navy/40"
+                   />
+                </div>
+                <div>
+                   <label className="block text-[10px] font-black opacity-30 uppercase tracking-widest mb-2 ml-1">Passport Expiry</label>
+                   <input
+                     type="date"
+                     value={expiry}
+                     onChange={(e) => setExpiry(e.target.value)}
+                     className="w-full bg-white border-2 border-gray-50 h-14 rounded-2xl px-6 font-black uppercase text-navy focus:border-navy transition-all outline-none"
+                   />
+                </div>
+                {message && (
+                  <p className={`text-[10px] font-black uppercase text-center ${message.includes('success') ? 'text-green-600' : 'text-red-500'}`}>
+                    {message}
+                  </p>
+                )}
+                <button type="submit" disabled={saving} className="btn-primary w-full shadow-navy/10 active:scale-95 transition-all">
+                  {saving ? <Loader2 className="animate-spin" /> : <Save size={20} />}
+                  Save Details
+                </button>
+             </form>
           </div>
-          
-          <p className="text-sm text-navy/70 mb-6 font-medium">
-            Your passport information is used to provide accurate visa requirements and border entry advice securely and privately.
-          </p>
-
-          <form onSubmit={handleSave} className="space-y-6">
-            <div>
-              <label className="block text-sm font-bold text-navy uppercase tracking-wider mb-2">
-                Passport Nationality
-              </label>
-              <input
-                type="text"
-                value={nationality}
-                onChange={(e) => setNationality(e.target.value)}
-                className="w-full px-4 py-4 rounded-xl border-2 border-gray-200 bg-white focus:border-navy text-lg font-bold text-navy uppercase"
-                disabled
-              />
-              <p className="text-xs text-navy/50 font-bold mt-2">Currently locked for MVP.</p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-bold text-navy uppercase tracking-wider mb-2">
-                Passport Expiry Date
-              </label>
-              <input
-                type="date"
-                value={expiry}
-                onChange={(e) => setExpiry(e.target.value)}
-                className="w-full px-4 py-4 rounded-xl border-2 border-gray-200 bg-white focus:border-navy text-lg font-bold text-navy uppercase"
-                required
-              />
-            </div>
-
-            {message && (
-              <div className={`p-4 rounded-xl font-bold text-sm shadow-sm flex items-start gap-3 ${
-                message.includes('success') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
-              }`}>
-                {message.includes('success') ? <CheckCircle2 className="w-5 h-5 flex-shrink-0" /> : <AlertTriangle className="w-5 h-5 flex-shrink-0" />}
-                <p>{message}</p>
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={saving}
-              className="w-full bg-navy text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-opacity-90 transition-all active:scale-95"
-            >
-              {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-              {saving ? 'SAVING...' : 'SAVE PROFILE'}
-            </button>
-          </form>
-        </div>
+        </section>
 
         {/* Security Section */}
-        <div className="card-concierge bg-white border-0 mt-8">
-          <div className="flex items-center gap-3 mb-6">
-            <Key className="w-6 h-6 text-navy/40" />
-            <h2 className="text-xl font-bold text-navy uppercase">Security</h2>
+        <section>
+          <p className="text-[10px] font-black opacity-30 uppercase tracking-[0.3em] ml-4 mb-3">Cloud Security</p>
+          <div className="card-concierge bg-white border-none shadow-sm">
+             <form onSubmit={handlePasswordUpdate} className="space-y-6">
+                <div>
+                   <label className="block text-[10px] font-black opacity-30 uppercase tracking-widest mb-2 ml-1">New Password</label>
+                   <input
+                     type="password"
+                     placeholder="••••••••"
+                     value={newPassword}
+                     onChange={(e) => setNewPassword(e.target.value)}
+                     className="w-full bg-white border-2 border-gray-50 h-14 rounded-2xl px-6 font-black text-navy focus:border-navy transition-all outline-none"
+                   />
+                </div>
+                {passwordMessage && (
+                  <p className={`text-[10px] font-black uppercase text-center ${passwordMessage.includes('success') ? 'text-green-600' : 'text-red-500'}`}>
+                    {passwordMessage}
+                  </p>
+                )}
+                <button type="submit" disabled={passwordSaving || !newPassword} className="w-full bg-navy/5 text-navy h-14 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2 active:bg-red-50 active:text-red-600 transition-all">
+                   {passwordSaving ? <Loader2 className="animate-spin" /> : <Key size={18} />}
+                   Update Security Key
+                </button>
+             </form>
           </div>
+        </section>
 
-          <form onSubmit={handlePasswordUpdate} className="space-y-6">
-            <div>
-              <label className="block text-sm font-bold text-navy uppercase tracking-wider mb-2">
-                New Password
-              </label>
-              <input
-                type="password"
-                placeholder="••••••••"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full px-4 py-4 rounded-xl border-2 border-gray-200 bg-white focus:border-navy text-lg font-bold text-navy"
-                minLength={6}
-              />
-            </div>
-
-            {passwordMessage && (
-              <div className={`p-4 rounded-xl font-bold text-sm shadow-sm flex items-start gap-3 ${
-                passwordMessage.includes('success') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
-              }`}>
-                {passwordMessage.includes('success') ? <CheckCircle2 className="w-5 h-5 flex-shrink-0" /> : <AlertTriangle className="w-5 h-5 flex-shrink-0" />}
-                <p>{passwordMessage}</p>
+        {/* Global Actions */}
+        <section className="pt-4">
+           <button 
+             onClick={() => { triggerHaptic(); supabase.auth.signOut(); navigate('/login'); }}
+             className="w-full h-20 bg-red-50 rounded-3xl flex items-center gap-6 px-8 group active:scale-95 transition-all"
+           >
+              <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center group-active:bg-red-500 transition-colors">
+                <LogOut className="text-red-500 group-active:text-white" size={20} />
               </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={passwordSaving || !newPassword}
-              className="w-full bg-navy/5 text-navy font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-navy/10 transition-all active:scale-95 disabled:opacity-50"
-            >
-              {passwordSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Key className="w-5 h-5" />}
-              {passwordSaving ? 'UPDATING...' : 'UPDATE PASSWORD'}
-            </button>
-          </form>
-        </div>
-      </main>
+              <div className="text-left">
+                <p className="text-sm font-black text-red-600 uppercase tracking-tight">Sign Out</p>
+                <p className="text-[10px] font-bold text-red-400 uppercase tracking-widest">End Session</p>
+              </div>
+           </button>
+        </section>
+      </div>
     </div>
   );
 }

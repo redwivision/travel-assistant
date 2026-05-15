@@ -13,19 +13,37 @@
 @layer base {
   body {
     @apply bg-surface text-navy font-sans antialiased;
-    font-size: 18px; /* Base font size larger for readability */
+    font-size: 16px; /* Optimized for mobile */
+    /* Support for iOS Safe Areas */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
   }
 }
 
 /* Custom UI patterns */
 .card-concierge {
-  @apply bg-white border border-gray-200 rounded-3xl p-8 shadow-sm;
+  @apply bg-white border border-gray-200 rounded-[2.5rem] p-6 shadow-sm sm:p-8;
 }
 
 .btn-primary {
-  @apply bg-navy text-white font-bold py-6 px-10 rounded-3xl transition-all active:scale-[0.98] flex items-center justify-center gap-4 text-2xl shadow-lg;
+  @apply bg-navy text-white font-bold h-14 px-8 rounded-2xl transition-all active:scale-[0.98] flex items-center justify-center gap-3 text-lg shadow-lg;
 }
 
 .alert-yellow {
-  @apply bg-safety-yellow text-navy px-4 py-2 font-black rounded-lg;
+  @apply bg-safety-yellow text-navy px-4 py-2 font-black rounded-xl;
+}
+
+.safe-pb {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 80px); /* Space for bottom nav */
+}
+
+/* Skeleton Loader Animation */
+@keyframes skeleton-pulse {
+  0% { opacity: 0.5; }
+  50% { opacity: 1; }
+  100% { opacity: 0.5; }
+}
+
+.skeleton {
+  @apply bg-gray-100 rounded-2xl animate-[skeleton-pulse_1.5s_ease-in-out_infinite];
 }
