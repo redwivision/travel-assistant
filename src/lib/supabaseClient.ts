@@ -75,11 +75,21 @@ async function callEdgeFunction<T>(
     headers["Authorization"] = `Bearer ${session.access_token}`; // Override with strict auth session
   }
 
-  const res = await fetch(`${SUPABASE_URL}/functions/v1/${name}`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify(body),
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 9000); // 9-second max
+  let res: Response;
+  try {
+    res = await fetch(`${SUPABASE_URL}/functions/v1/${name}`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+  } catch (fetchErr) {
+    clearTimeout(timeoutId);
+    throw new Error("Request timed out or network error. Please try again.");
+  }
+  clearTimeout(timeoutId);
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }));
@@ -96,29 +106,29 @@ async function callEdgeFunction<T>(
  * Defaults to Ethiopian citizenship.
  */
 export async function getVisaInfo(destination: string, citizenship = "ethiopia", passportExpiry?: string): Promise<VisaInfo> {
-  return callEdgeFunction<VisaInfo>("get-visa-info", { citizenship, destination, passportExpiry });
+  return callEdgeFunction<VisaInfo>("get-visa-info", { citizenship, destination, passportExpiry }, true);
 }
 
 /**
  * Get safety advisory and level for a destination.
  */
 export async function getSafetyInfo(destination: string): Promise<SafetyInfo> {
-  return callEdgeFunction<SafetyInfo>("get-safety-info", { destination });
+  return callEdgeFunction<SafetyInfo>("get-safety-info", { destination }, true);
 }
 
 /**
  * Get a 7-day weather forecast for a destination.
  * @param start_date - Optional ISO date string (e.g. "2025-06-01"). Defaults to today.
  */
-export async function getWeather(destination: string, start_date?: string): Promise<WeatherForecast> {
-  return callEdgeFunction<WeatherForecast>("get-weather", { destination, start_date });
+export async function getWeather(destination: string, start_date?: string, city?: string): Promise<WeatherForecast> {
+  return callEdgeFunction<WeatherForecast>("get-weather", { destination, start_date, city }, true);
 }
 
 /**
  * Get plug type, voltage, and frequency for a destination.
  */
 export async function getElectricalInfo(destination: string): Promise<ElectricalInfo> {
-  return callEdgeFunction<ElectricalInfo>("get-electrical", { destination });
+  return callEdgeFunction<ElectricalInfo>("get-electrical", { destination }, true);
 }
 
 // ─── Authenticated Trip Helpers ───────────────────────────────────────────────

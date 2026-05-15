@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
-import { ArrowLeft, Save, Loader2, AlertCircle, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, AlertCircle, CheckCircle2, AlertTriangle, Key } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function Profile() {
@@ -13,6 +13,11 @@ export default function Profile() {
   const [nationality, setNationality] = useState('Ethiopia');
   const [expiry, setExpiry] = useState('');
   const [message, setMessage] = useState('');
+  
+  // Password state
+  const [newPassword, setNewPassword] = useState('');
+  const [passwordSaving, setPasswordSaving] = useState(false);
+  const [passwordMessage, setPasswordMessage] = useState('');
 
   useEffect(() => {
     async function loadProfile() {
@@ -68,6 +73,30 @@ export default function Profile() {
       setMessage('Failed to update profile. Please try again.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handlePasswordUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPassword) return;
+    if (newPassword.length < 6) {
+      setPasswordMessage('Password must be at least 6 characters.');
+      return;
+    }
+
+    setPasswordSaving(true);
+    setPasswordMessage('');
+
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      setPasswordMessage('Password updated successfully!');
+      setNewPassword('');
+    } catch (err) {
+      console.error('Error updating password:', err);
+      setPasswordMessage('Failed to update password.');
+    } finally {
+      setPasswordSaving(false);
     }
   };
 
@@ -148,6 +177,48 @@ export default function Profile() {
             >
               {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
               {saving ? 'SAVING...' : 'SAVE PROFILE'}
+            </button>
+          </form>
+        </div>
+
+        {/* Security Section */}
+        <div className="card-concierge bg-white border-0 mt-8">
+          <div className="flex items-center gap-3 mb-6">
+            <Key className="w-6 h-6 text-navy/40" />
+            <h2 className="text-xl font-bold text-navy uppercase">Security</h2>
+          </div>
+
+          <form onSubmit={handlePasswordUpdate} className="space-y-6">
+            <div>
+              <label className="block text-sm font-bold text-navy uppercase tracking-wider mb-2">
+                New Password
+              </label>
+              <input
+                type="password"
+                placeholder="••••••••"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="w-full px-4 py-4 rounded-xl border-2 border-gray-200 bg-white focus:border-navy text-lg font-bold text-navy"
+                minLength={6}
+              />
+            </div>
+
+            {passwordMessage && (
+              <div className={`p-4 rounded-xl font-bold text-sm shadow-sm flex items-start gap-3 ${
+                passwordMessage.includes('success') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+              }`}>
+                {passwordMessage.includes('success') ? <CheckCircle2 className="w-5 h-5 flex-shrink-0" /> : <AlertTriangle className="w-5 h-5 flex-shrink-0" />}
+                <p>{passwordMessage}</p>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={passwordSaving || !newPassword}
+              className="w-full bg-navy/5 text-navy font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-navy/10 transition-all active:scale-95 disabled:opacity-50"
+            >
+              {passwordSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Key className="w-5 h-5" />}
+              {passwordSaving ? 'UPDATING...' : 'UPDATE PASSWORD'}
             </button>
           </form>
         </div>

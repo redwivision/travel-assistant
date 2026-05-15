@@ -1,4 +1,3 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
 import { requireAuth } from "../_shared/auth.ts";
 
@@ -8,17 +7,11 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const { user } = await requireAuth(req);
+    const { supabase } = await requireAuth(req);
 
-    const adminClient = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SERVICE_ROLE_KEY")!
-    );
-
-    const { data, error } = await adminClient
+    const { data, error } = await supabase
       .from("trips")
       .select("*")
-      .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 
     if (error) {

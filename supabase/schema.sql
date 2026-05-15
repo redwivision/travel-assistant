@@ -11,7 +11,8 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   full_name            TEXT,
   passport_nationality TEXT NOT NULL DEFAULT 'Ethiopia',
   passport_expiry      DATE,
-  created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at           TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Auto-create a profile row when a new user signs up
@@ -49,6 +50,20 @@ CREATE POLICY "Users can update own profile"
   ON public.profiles FOR UPDATE
   USING (auth.uid() = id)
   WITH CHECK (auth.uid() = id);
+
+-- Auto-update trigger for updated_at
+CREATE OR REPLACE FUNCTION public.set_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS profiles_set_updated_at ON public.profiles;
+CREATE TRIGGER profiles_set_updated_at
+  BEFORE UPDATE ON public.profiles
+  FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 
 
 -- ─────────────────────────────────────────────
@@ -89,7 +104,9 @@ CREATE POLICY "Users can delete own trips"
 
 
 -- ─────────────────────────────────────────────
--- 3. SAVED PLACES (optional bookmarks)
+-- 3. SAVED PLACES
+-- STATUS: Schema ready. UI not yet wired up.
+-- FUTURE: Implement as "Bookmarked Destinations" feature in Phase 3.
 -- ─────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.saved_places (
   id          BIGSERIAL PRIMARY KEY,

@@ -4,6 +4,7 @@ import { PlaneTakeoff, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function Login() {
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
@@ -19,7 +20,11 @@ export default function Login() {
     setSuccessMsg('');
 
     const { error: authError } = isSignUp
-      ? await supabase.auth.signUp({ email, password })
+      ? await supabase.auth.signUp({ 
+          email, 
+          password,
+          options: { data: { full_name: fullName } } 
+        })
       : await supabase.auth.signInWithPassword({ email, password });
 
     if (authError) {
@@ -52,6 +57,22 @@ export default function Login() {
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow-xl shadow-navy/5 sm:rounded-3xl sm:px-10 border border-gray-100">
           <form className="space-y-6" onSubmit={handleAuth}>
+            {isSignUp && (
+              <div>
+                <label className="block text-sm font-bold text-navy uppercase tracking-wider mb-2">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="John Doe"
+                  className="w-full px-4 py-4 rounded-xl border-2 border-gray-100 focus:border-navy focus:ring-0 transition-colors text-lg"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                />
+              </div>
+            )}
+
             <div>
               <label className="block text-sm font-bold text-navy uppercase tracking-wider mb-2">
                 Email

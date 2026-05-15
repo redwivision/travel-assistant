@@ -1,4 +1,5 @@
 import { corsHeaders } from "../_shared/cors.ts";
+import { requireAuth } from "../_shared/auth.ts";
 
 const electricalData: Record<string, {
   plugType: string;
@@ -23,6 +24,7 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    await requireAuth(req);
     const { destination } = await req.json();
 
     if (!destination) {
@@ -51,6 +53,7 @@ Deno.serve(async (req: Request) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
+    if (err instanceof Response) return err;
     return new Response(
       JSON.stringify({ error: "Invalid request", detail: String(err) }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }

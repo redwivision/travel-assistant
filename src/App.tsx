@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import Login from './pages/Login';
+import Landing from './pages/Landing';
 import Dashboard from './pages/Dashboard';
 import SafetyDetails from './pages/SafetyDetails';
 import Profile from './pages/Profile';
@@ -10,8 +11,11 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   
   if (loading) {
     return (
-      <div className="min-h-screen bg-surface flex items-center justify-center font-display text-navy font-bold text-xl">
-        Loading...
+      <div className="min-h-screen bg-surface flex items-center justify-center font-display text-navy font-bold text-xl uppercase tracking-[0.2em]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-navy border-t-transparent rounded-full animate-spin"></div>
+          <span>Syncing Concierge...</span>
+        </div>
       </div>
     );
   }
@@ -24,17 +28,21 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  const { session } = useAuth();
+
   return (
     <Routes>
+      <Route path="/" element={session ? <Navigate to="/dashboard" replace /> : <Landing />} />
       <Route path="/login" element={<Login />} />
       <Route 
         path="/*" 
         element={
           <ProtectedRoute>
             <Routes>
-              <Route path="/" element={<Dashboard />} />
+              <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/safety/:destination" element={<SafetyDetails />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>
           </ProtectedRoute>
         } 

@@ -1,4 +1,5 @@
 import { corsHeaders } from "../_shared/cors.ts";
+import { requireAuth } from "../_shared/auth.ts";
 
 const visaData: Record<string, {
   visaRequired: boolean;
@@ -104,6 +105,7 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    await requireAuth(req);
     const { citizenship = "ethiopia", destination, passportExpiry } = await req.json();
 
     if (!destination) {
@@ -150,6 +152,7 @@ Deno.serve(async (req: Request) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
+    if (err instanceof Response) return err;
     return new Response(
       JSON.stringify({ error: "Invalid request body", detail: String(err) }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
