@@ -362,14 +362,16 @@ export default function Dashboard({ showOnlyTrips, showOnlyWeather }: DashboardP
                 </div>
                 <div>
                    <p className="text-lg font-black mb-3 leading-tight tracking-tight uppercase italic">{visa.notes}</p>
-                   {visa.requiredDocuments.length > 0 && (
+                   {visa.requiredDocuments && visa.requiredDocuments.length > 0 ? (
                     <div className="flex flex-wrap gap-2">
-                      {visa.requiredDocuments.slice(0, 2).map((doc, i) => (
+                      {visa.requiredDocuments.slice(0, 3).map((doc, i) => (
                         <div key={i} className="px-2 py-1 bg-navy/5 rounded-md text-[8px] font-black uppercase text-navy/40">
                            {doc}
                         </div>
                       ))}
                     </div>
+                   ) : (
+                     <p className="text-[10px] font-bold text-navy/30 uppercase">Verify exact checklist with official portal.</p>
                    )}
                 </div>
                 {visa.officialUrl && (
