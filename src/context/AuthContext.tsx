@@ -6,14 +6,24 @@ interface AuthContextType {
   session: Session | null;
   user: User | null;
   loading: boolean;
+  signOut: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType>({ session: null, user: null, loading: true });
+const AuthContext = createContext<AuthContextType>({ 
+  session: null, 
+  user: null, 
+  loading: true,
+  signOut: async () => {} 
+});
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const signOut = async () => {
+    await supabase.auth.signOut();
+  };
 
   useEffect(() => {
     const initSession = async () => {
@@ -35,7 +45,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ session, user, loading }}>
+    <AuthContext.Provider value={{ session, user, loading, signOut }}>
       {children}
     </AuthContext.Provider>
   );

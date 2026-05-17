@@ -2,13 +2,13 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import { 
-  User, ShieldCheck, Key, Save, Loader2, 
-  CheckCircle2, AlertTriangle, LogOut 
+  User, Key, Save, Loader2, 
+  LogOut 
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function Profile() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
   
   const [loading, setLoading] = useState(true);
@@ -23,8 +23,8 @@ export default function Profile() {
   const [passwordMessage, setPasswordMessage] = useState('');
 
   // Haptic feedback helper
-  const triggerHaptic = () => {
-    if ('vibrate' in navigator) navigator.vibrate(10);
+  const triggerHaptic = (intensity = 10) => {
+    if ('vibrate' in navigator) navigator.vibrate(intensity);
   };
 
   useEffect(() => {
@@ -55,7 +55,7 @@ export default function Profile() {
     e.preventDefault();
     if (!user) return;
     
-    triggerHaptic();
+    triggerHaptic(15);
     setSaving(true);
     setMessage('');
 
@@ -82,7 +82,7 @@ export default function Profile() {
     e.preventDefault();
     if (!newPassword) return;
     
-    triggerHaptic();
+    triggerHaptic(15);
     setPasswordSaving(true);
     setPasswordMessage('');
 
@@ -113,13 +113,13 @@ export default function Profile() {
     <div className="max-w-lg mx-auto px-6 pt-12 pb-32 min-h-screen">
       {/* Profile Header */}
       <header className="flex flex-col items-center mb-10 text-center">
-        <div className="w-24 h-24 bg-navy rounded-3xl flex items-center justify-center shadow-2xl border-4 border-white mb-4">
-           <span className="text-white font-black text-4xl uppercase tracking-tighter italic">
+        <div className="w-24 h-24 bg-navy rounded-3xl flex items-center justify-center shadow-2xl border-4 border-white mb-4 italic">
+           <span className="text-white font-black text-4xl uppercase tracking-tighter">
              {userName.split(' ').map((n: string) => n[0]).join('')}
            </span>
         </div>
         <h1 className="text-3xl font-black text-navy uppercase tracking-tighter">{userName}</h1>
-        <p className="text-xs font-black opacity-30 uppercase tracking-[0.2em] mt-2">Verified Traveler</p>
+        <p className="text-[10px] font-black opacity-30 uppercase tracking-[0.2em] mt-2">Verified Elite Account</p>
       </header>
 
       <div className="space-y-8">
@@ -136,6 +136,9 @@ export default function Profile() {
                      disabled
                      className="w-full bg-navy/5 border-none h-14 rounded-2xl px-6 font-black uppercase text-navy/40"
                    />
+                   <p className="mt-2 ml-1 text-[8px] font-bold text-navy/30 uppercase tracking-tight">
+                     * This engine is currently optimized for Ethiopian passport holders.
+                   </p>
                 </div>
                 <div>
                    <label className="block text-[10px] font-black opacity-30 uppercase tracking-widest mb-2 ml-1">Passport Expiry</label>
@@ -179,7 +182,7 @@ export default function Profile() {
                     {passwordMessage}
                   </p>
                 )}
-                <button type="submit" disabled={passwordSaving || !newPassword} className="w-full bg-navy/5 text-navy h-14 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2 active:bg-red-50 active:text-red-600 transition-all">
+                <button type="submit" disabled={passwordSaving || !newPassword} className="w-full bg-navy/5 text-navy h-14 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 active:bg-red-50 active:text-red-600 transition-all">
                    {passwordSaving ? <Loader2 className="animate-spin" /> : <Key size={18} />}
                    Update Security Key
                 </button>
@@ -190,8 +193,8 @@ export default function Profile() {
         {/* Global Actions */}
         <section className="pt-4">
            <button 
-             onClick={() => { triggerHaptic(); supabase.auth.signOut(); navigate('/login'); }}
-             className="w-full h-20 bg-red-50 rounded-3xl flex items-center gap-6 px-8 group active:scale-95 transition-all"
+             onClick={async () => { triggerHaptic(20); await signOut(); navigate('/login'); }}
+             className="w-full h-20 bg-red-50 rounded-3xl flex items-center gap-6 px-8 group active:scale-150 transition-all overflow-hidden"
            >
               <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center group-active:bg-red-500 transition-colors">
                 <LogOut className="text-red-500 group-active:text-white" size={20} />
