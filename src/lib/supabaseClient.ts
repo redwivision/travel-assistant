@@ -20,6 +20,9 @@ export interface Trip {
   start_date: string | null;
   end_date: string | null;
   notes: string | null;
+  trip_status: 'free' | 'pending_verification' | 'paid';
+  payment_ref: string | null;
+  parsed_itinerary: any | null;
   created_at: string;
 }
 
@@ -188,4 +191,27 @@ export async function getSession() {
 /** Listen to auth state changes */
 export function onAuthStateChange(callback: Parameters<typeof supabase.auth.onAuthStateChange>[0]) {
   return supabase.auth.onAuthStateChange(callback);
+}
+
+// ─── Premium & Automation Helpers ───────────────────────────────────────────
+
+/**
+ * Claim a manual payment reference.
+ */
+export async function claimPayment(trip_id: number, payment_ref: string): Promise<{ success: boolean; status: string }> {
+  return callEdgeFunction<{ success: boolean; status: string }>("claim-payment", { trip_id, payment_ref }, true);
+}
+
+/**
+ * Use a free trial credit to unlock a trip.
+ */
+export async function claimTrial(trip_id: number): Promise<{ success: boolean; remaining_credits: number }> {
+  return callEdgeFunction<{ success: boolean; remaining_credits: number }>("claim-trial", { trip_id }, true);
+}
+
+/**
+ * Parse an itinerary email text using LLM.
+ */
+export async function parseItinerary(trip_id: number, raw_text: string): Promise<{ itinerary: any }> {
+  return callEdgeFunction<{ itinerary: any }>("parse-itinerary", { trip_id, raw_text }, true);
 }

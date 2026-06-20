@@ -8,6 +8,7 @@ import {
   Trash2, Zap, PlaneTakeoff, RefreshCw 
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { generateBriefing } from '../utils/generateBriefing';
 
 const DESTINATIONS = [
   "South Africa", "Mozambique", "Madagascar", "Kenya", "Zimbabwe", 
@@ -61,6 +62,8 @@ export default function Dashboard({ showOnlyTrips, showOnlyWeather }: DashboardP
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isStandalone, setIsStandalone] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [freeCredits, setFreeCredits] = useState(0);
+  const [activeTrip, setActiveTrip] = useState<Trip | null>(null);
 
   // Cache & Control
   const widgetCache = useRef<Map<string, { visa: VisaInfo; safety: SafetyInfo; weather: WeatherForecast; electrical: ElectricalInfo }>>(new Map());
@@ -192,10 +195,21 @@ export default function Dashboard({ showOnlyTrips, showOnlyWeather }: DashboardP
   };
 
   const fetchTrips = async () => {
+    if (!user) return;
     setLoadingTrips(true);
     try {
       const res = await getTrips();
       setTrips(res.trips);
+      
+      // Load free credits
+      const { data: profile } = await supabase.from('profiles').select('free_credits').eq('id', user.id).single();
+      if (profile) setFreeCredits(profile.free_credits);
+
+      // Initialize active trip if not set
+      if (res.trips.length > 0 && !activeTrip) {
+        setActiveTrip(res.trips[0]);
+        setDestination(res.trips[0].destination);
+      }
     } catch (err) {
       console.error("Error fetching trips:", err);
     }
@@ -239,6 +253,17 @@ export default function Dashboard({ showOnlyTrips, showOnlyWeather }: DashboardP
       await fetchTrips();
     } catch (err) {
       console.error("Failed to delete trip:", err);
+    }
+  };
+
+  const handleDownloadBriefing = async () => {
+    if (!activeTrip) return;
+    triggerHaptic(30);
+    try {
+      await generateBriefing(activeTrip, visa, safety, weather, electrical);
+    } catch (err) {
+      console.error("Failed to generate briefing:", err);
+      setWidgetError("Briefing generation failed. Intelligence signal weak.");
     }
   };
 
@@ -339,6 +364,26 @@ export default function Dashboard({ showOnlyTrips, showOnlyWeather }: DashboardP
                   </div>
                 </div>
              </div>
+
+             {/* Premium Upgrade Banner */}
+             {activeTrip && activeTrip.trip_status !== 'paid' && (
+                <div className="mt-8 pt-8 border-t border-white/10 flex flex-col gap-4">
+                   <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-safety-yellow rounded-lg flex items-center justify-center shrink-0">
+                         <Zap className="text-navy w-4 h-4" />
+                      </div>
+                      <p className="text-[10px] font-black text-white/80 uppercase tracking-widest leading-tight">
+                         Premium protocol restricted. {freeCredits > 0 ? `${freeCredits} Trial Credit Available.` : 'Phase Upgrade Required.'}
+                      </p>
+                   </div>
+                   <button 
+                    onClick={() => navigate(`/unlock/${activeTrip.id}`)}
+                    className="w-full bg-safety-yellow text-navy font-black py-4 rounded-2xl uppercase tracking-[0.2em] text-[10px] shadow-lg shadow-safety-yellow/10"
+                   >
+                      Initiate Upgrade Sequence
+                   </button>
+                </div>
+             )}
           </div>
         </section>
       )}
@@ -375,9 +420,19 @@ export default function Dashboard({ showOnlyTrips, showOnlyWeather }: DashboardP
                    )}
                 </div>
                 {visa.officialUrl && (
-                  <a href={visa.officialUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-[10px] font-black text-navy uppercase tracking-widest">
-                    Open Official Portal <ArrowRight size={10} />
-                  </a>
+                  <div className="flex gap-4">
+                    <a href={visa.officialUrl} target="_blank" rel="noreferrer" className="flex-1 flex items-center justify-center h-10 bg-surface rounded-xl text-[10px] font-black text-navy uppercase tracking-widest">
+                      Official Portal <ArrowRight size={10} className="ml-2" />
+                    </a>
+                    {activeTrip?.trip_status === 'paid' && (
+                      <button 
+                        onClick={() => navigate(`/visa/${destination}`)}
+                        className="flex-1 flex items-center justify-center h-10 bg-navy text-white rounded-xl text-[10px] font-black uppercase tracking-widest"
+                      >
+                         Smart Companion <Zap size={10} className="ml-2 text-safety-yellow" />
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
             )}
@@ -449,7 +504,49 @@ export default function Dashboard({ showOnlyTrips, showOnlyWeather }: DashboardP
                </div>
             )}
 
-            {/* 5. TRIPS (Home & Trips Tab) */}
+            {/* 5. PREMIUM TOOLS (Home Only) */}
+            {!showOnlyTrips && !showOnlyWeather && activeTrip?.trip_status === 'paid' && (
+               <div className="space-y-6 animate-in fade-in slide-in-from-bottom-8">
+                  <div className="grid grid-cols-1 gap-4">
+                     <button 
+                       onClick={() => navigate(`/itinerary/${activeTrip.id}`)}
+                       className="bg-white p-8 rounded-[2.5rem] border border-gray-100 flex items-center justify-between shadow-sm active:scale-95 transition-all"
+                     >
+                        <div className="flex items-center gap-6">
+                           <div className="w-14 h-14 bg-surface rounded-2xl flex items-center justify-center text-navy/40">
+                              <PlaneTakeoff size={24} />
+                           </div>
+                           <div className="text-left">
+                              <p className="text-[10px] font-black opacity-30 uppercase mb-1">Intelligence Module</p>
+                              <h4 className="text-lg font-black text-navy uppercase italic">Itinerary Parser</h4>
+                           </div>
+                        </div>
+                        <ArrowRight className="text-navy opacity-20" />
+                     </button>
+
+                     <button 
+                       onClick={handleDownloadBriefing}
+                       className="bg-navy p-10 rounded-[3rem] text-white flex flex-col gap-8 shadow-2xl relative overflow-hidden group active:scale-95 transition-all"
+                     >
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 -mr-16 -mt-16 rounded-full group-hover:scale-150 transition-transform duration-1000"></div>
+                        <div className="flex justify-between items-start relative z-10">
+                           <div className="p-3 bg-white/10 rounded-2xl text-safety-yellow">
+                              <Download size={24} />
+                           </div>
+                           <span className="text-[8px] font-black uppercase tracking-[0.3em] bg-white/10 px-3 py-1 rounded-full">Secure Document</span>
+                        </div>
+                        <div className="relative z-10 text-left">
+                           <h4 className="text-2xl font-black uppercase tracking-tight italic mb-2">Executive Briefing</h4>
+                           <p className="text-[10px] font-bold opacity-40 uppercase tracking-widest leading-relaxed">
+                              Consolidated PDF with safety intelligence, weather protocols, and flight data.
+                           </p>
+                        </div>
+                     </button>
+                  </div>
+               </div>
+            )}
+
+            {/* 6. TRIPS (Home & Trips Tab) */}
             {(showOnlyTrips || (!showOnlyWeather && !showOnlyTrips)) && (
               <section className="mt-4">
                  <div className="flex justify-between items-center mb-6">

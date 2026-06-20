@@ -10,7 +10,9 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   id                   UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   full_name            TEXT,
   passport_nationality TEXT NOT NULL DEFAULT 'Ethiopia',
+  passport_number      TEXT,
   passport_expiry      DATE,
+  free_credits         INTEGER DEFAULT 1,
   created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at           TIMESTAMPTZ DEFAULT NOW()
 );
@@ -19,11 +21,12 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
-  INSERT INTO public.profiles (id, full_name, passport_nationality)
+  INSERT INTO public.profiles (id, full_name, passport_nationality, free_credits)
   VALUES (
     NEW.id,
     COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
-    COALESCE(NEW.raw_user_meta_data->>'passport_nationality', 'Ethiopia')
+    COALESCE(NEW.raw_user_meta_data->>'passport_nationality', 'Ethiopia'),
+    1
   )
   ON CONFLICT (id) DO NOTHING;
   RETURN NEW;
@@ -70,17 +73,21 @@ CREATE TRIGGER profiles_set_updated_at
 -- 2. TRIPS
 -- ─────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.trips (
-  id          BIGSERIAL PRIMARY KEY,
-  user_id     UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  destination TEXT NOT NULL,
-  start_date  DATE,
-  end_date    DATE,
-  notes       TEXT,
-  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  id               BIGSERIAL PRIMARY KEY,
+  user_id          UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  destination      TEXT NOT NULL,
+  start_date       DATE,
+  end_date         DATE,
+  notes            TEXT,
+  trip_status      TEXT NOT NULL DEFAULT 'free',
+  payment_ref      TEXT,
+  parsed_itinerary JSONB,
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- Index for fast user queries
 CREATE INDEX IF NOT EXISTS trips_user_id_idx ON public.trips(user_id);
+CREATE INDEX IF NOT EXISTS trips_payment_ref_idx ON public.trips(payment_ref);
 
 -- RLS for trips
 ALTER TABLE public.trips ENABLE ROW LEVEL SECURITY;
@@ -104,7 +111,23 @@ CREATE POLICY "Users can delete own trips"
 
 
 -- ─────────────────────────────────────────────
--- 3. SAVED PLACES
+-- 3. UNCLAIMED PAYMENTS (for SMS webhook)
+-- ─────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.unclaimed_payments (
+  txn_id     TEXT PRIMARY KEY,
+  amount     NUMERIC,
+  used       BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- RLS for unclaimed_payments (admin/webhook access only)
+-- For now, we skip specific policies as Edge Functions usually bypass RLS with service_role
+-- But we enable it for safety.
+ALTER TABLE public.unclaimed_payments ENABLE ROW LEVEL SECURITY;
+
+
+-- ─────────────────────────────────────────────
+-- 4. SAVED PLACES
 -- STATUS: Schema ready. UI not yet wired up.
 -- FUTURE: Implement as "Bookmarked Destinations" feature in Phase 3.
 -- ─────────────────────────────────────────────

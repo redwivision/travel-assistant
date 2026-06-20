@@ -5,6 +5,9 @@ import Landing from './pages/Landing';
 import Dashboard from './pages/Dashboard';
 import SafetyDetails from './pages/SafetyDetails';
 import Profile from './pages/Profile';
+import PaymentGate from './pages/PaymentGate';
+import VisaCompanion from './pages/VisaCompanion';
+import ItineraryParser from './pages/ItineraryParser';
 import BottomNav from './components/BottomNav';
 
 function AppLayout({ children }: { children: React.ReactNode }) {
@@ -57,6 +60,9 @@ export default function App() {
               <Route path="/weather" element={<Dashboard showOnlyWeather />} />
               <Route path="/safety/:destination" element={<SafetyDetails />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/unlock/:tripId" element={<PaymentGate />} />
+              <Route path="/visa/:destination" element={<VisaCompanion />} />
+              <Route path="/itinerary/:tripId" element={<ItineraryParser />} />
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>
           </ProtectedRoute>
