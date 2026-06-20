@@ -4,7 +4,7 @@ import { supabase, parseItinerary } from '../lib/supabaseClient';
 import { 
   ArrowLeft, Plane, Hotel, CheckCircle2, 
   Loader2, AlertCircle, Send, ClipboardPaste,
-  MapPin, Clock, Hash, LayoutGrid, List
+  MapPin, Clock
 } from 'lucide-react';
 
 export default function ItineraryParser() {

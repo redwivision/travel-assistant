@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import { 
-  User, Key, Save, Loader2, 
+  Key, Save, Loader2, 
   LogOut 
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';

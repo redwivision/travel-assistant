@@ -4,8 +4,7 @@ import { supabase, getVisaInfo } from '../lib/supabaseClient';
 import type { VisaInfo } from '../lib/supabaseClient';
 import { 
   ArrowLeft, Copy, CheckCircle2, Globe, 
-  ExternalLink, Loader2, Info, ChevronRight,
-  ShieldCheck 
+  ExternalLink, Loader2, ShieldCheck 
 } from 'lucide-react';
 
 export default function VisaCompanion() {

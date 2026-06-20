@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { supabase, getVisaInfo, getSafetyInfo, getWeather, getElectricalInfo, getTrips, saveTrip, deleteTrip } from '../lib/supabaseClient';
 import type { VisaInfo, SafetyInfo, WeatherForecast, ElectricalInfo, Trip } from '../lib/supabaseClient';
 import { 
-  ShieldCheck, CloudSun, Globe, CheckCircle2, AlertTriangle, 
+  ShieldCheck, CloudSun, Globe, AlertTriangle, 
   Plus, Loader2, Download, ArrowRight, 
   Trash2, Zap, PlaneTakeoff, RefreshCw 
 } from 'lucide-react';

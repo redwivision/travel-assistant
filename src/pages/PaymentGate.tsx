@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase, claimPayment, claimTrial } from '../lib/supabaseClient';
 import { 
-  ShieldCheck, CreditCard, ArrowLeft, Loader2, 
-  CheckCircle2, AlertCircle, Zap, ExternalLink 
+  CreditCard, ArrowLeft, Loader2, 
+  CheckCircle2, AlertCircle, Zap
 } from 'lucide-react';
 
 export default function PaymentGate() {
